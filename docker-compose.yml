@@ -46,3 +46,6 @@ services:
       - cars
       - rental
       - payment
+
+volumes:
+  db-data:
