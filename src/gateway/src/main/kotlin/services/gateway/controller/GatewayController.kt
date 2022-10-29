@@ -248,10 +248,10 @@ class GatewayController {
     fun finishRental(
         @RequestHeader("User-Name") username: String,
         @PathVariable rentalUid: UUID
-    ): ResponseStatus {
-        val rental = getRental(rentalUid) ?: return ResponseStatus(HttpStatus.NOT_FOUND)
+    ): ResponseEntity<*> {
+        val rental = getRental(rentalUid) ?: return ResponseEntity("lol what", HttpStatus.NOT_FOUND)
 
-        if (username != rental.mUsername) return ResponseStatus(HttpStatus.NOT_FOUND)
+        if (username != rental.mUsername) return ResponseEntity("lol what", HttpStatus.NOT_FOUND)
 
         val carAvailableStateRequest =
             OkHttpKeeper
@@ -271,17 +271,17 @@ class GatewayController {
 
         ClientKeeper.client.newCall(rentalFinishRequest).execute()
 
-        return ResponseStatus(HttpStatus.NO_CONTENT)
+        return ResponseEntity("...", HttpStatus.NO_CONTENT)
     }
 
     @DeleteMapping("/rental/{rentalUid}")
     fun cancelRent(
         @RequestHeader("User-Name") username: String,
         @PathVariable rentalUid: UUID
-    ): ResponseStatus {
-        val rental = getRental(rentalUid) ?: return ResponseStatus(HttpStatus.NOT_FOUND)
+    ): ResponseEntity<*> {
+        val rental = getRental(rentalUid) ?: return ResponseEntity("lol man", HttpStatus.NOT_FOUND)
 
-        if (rental.mUsername != username) return ResponseStatus(HttpStatus.NOT_FOUND)
+        if (rental.mUsername != username) return ResponseEntity("lol man", HttpStatus.NOT_FOUND)
 
         val carAvailableStateRequest =
             OkHttpKeeper
@@ -310,6 +310,6 @@ class GatewayController {
 
         ClientKeeper.client.newCall(cancelPaymentRequest).execute()
 
-        return ResponseStatus(HttpStatus.NO_CONTENT)
+        return ResponseEntity("...", HttpStatus.NO_CONTENT)
     }
 }

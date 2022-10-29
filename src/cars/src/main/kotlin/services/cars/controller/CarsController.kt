@@ -10,8 +10,7 @@ import java.util.UUID
 
 @Controller
 @RequestMapping("/api/v1/cars")
-class CarsController(
-) {
+class CarsController {
 
     @GetMapping("/")
     fun getCars(@RequestParam("showAll") showAll: Boolean): ResponseEntity<Array<Car>> =
@@ -22,10 +21,10 @@ class CarsController(
         ResponseEntity.ok(CarsRepository.get(carUid))
 
     @PatchMapping("/{carUid}/available")
-    fun availableCar(@PathVariable carUid: UUID): ResponseStatus =
-        ResponseStatus(HttpStatus.OK).apply { CarsRepository.changeAvailability(carUid, true) }
+    fun availableCar(@PathVariable carUid: UUID): ResponseEntity<*> =
+        ResponseEntity("...", HttpStatus.OK).apply { CarsRepository.changeAvailability(carUid, true) }
 
     @PatchMapping("/{carUid}/unavailable")
-    fun unavailableCar(@PathVariable carUid: UUID): ResponseStatus =
-        ResponseStatus(HttpStatus.OK).apply { CarsRepository.changeAvailability(carUid, false) }
+    fun unavailableCar(@PathVariable carUid: UUID): ResponseEntity<*> =
+        ResponseEntity("...", HttpStatus.OK).apply { CarsRepository.changeAvailability(carUid, false) }
 }
