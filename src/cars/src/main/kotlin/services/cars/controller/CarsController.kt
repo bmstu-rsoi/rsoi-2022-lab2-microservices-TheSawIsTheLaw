@@ -1,13 +1,12 @@
 package services.cars.controller
 
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.*
 import services.cars.entity.Car
 import services.cars.repository.CarsRepository
+import java.util.UUID
 
 @Controller
 @RequestMapping("/api/v1/cars")
@@ -18,7 +17,14 @@ class CarsController(
     fun getCars(@RequestParam("showAll") showAll: Boolean): ResponseEntity<Array<Car>> =
         ResponseEntity.ok(CarsRepository.get(showAll))
 
-    @GetMapping("/{id}")
-    fun getCar(@PathVariable id: Int): ResponseEntity<Car> =
-        ResponseEntity.ok(CarsRepository.get(id))
+    @GetMapping("/{carUid}")
+    fun getCar(@PathVariable carUid: UUID): ResponseEntity<Car> =
+        ResponseEntity.ok(CarsRepository.get(carUid))
+
+    /**
+     * DON'T GO DIPPER, I CRIED
+     */
+    @PatchMapping("/{carUid}")
+    fun switchAvailablity(@PathVariable carUid: UUID): ResponseStatus =
+        ResponseStatus(HttpStatus.OK).apply { CarsRepository.patch(carUid) }
 }

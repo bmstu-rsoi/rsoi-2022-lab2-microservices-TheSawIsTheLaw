@@ -1,9 +1,7 @@
 package services.cars.repository
 
-import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.stereotype.Repository
 import services.cars.data.CarsTable
@@ -17,6 +15,7 @@ import services.cars.data.CarsTable.registrationNumber
 import services.cars.data.CarsTable.type
 import services.cars.entity.Car
 import services.cars.insecure.Config
+import java.util.*
 
 object CarsRepository {
 
@@ -50,10 +49,10 @@ object CarsRepository {
                 .toTypedArray()
         }
 
-    fun get(id: Int): Car? =
+    fun get(uid: UUID): Car? =
         transaction(db) {
             CarsTable
-                .select(CarsTable.id eq id)
+                .select(carUid eq uid)
                 .map { car ->
                     Car(
                     car[CarsTable.id],
@@ -68,5 +67,18 @@ object CarsRepository {
                 ) }
                 .toTypedArray()
                 .firstOrNull()
+        }
+
+    /**
+     * LOL, DON'T LOOK AT THIS
+     */
+    fun patch(uid: UUID) =
+        transaction(db) {
+            CarsTable.update({ (CarsTable.carUid eq uid) and (CarsTable.availability eq false) }) {
+                it[availability] = true
+            }
+            CarsTable.update({ (CarsTable.carUid eq uid) and (CarsTable.availability eq true) }) {
+                it[availability] = false
+            }
         }
 }

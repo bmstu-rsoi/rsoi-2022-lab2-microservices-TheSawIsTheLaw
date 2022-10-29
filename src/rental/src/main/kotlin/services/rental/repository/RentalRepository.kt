@@ -2,6 +2,7 @@ package services.rental.repository
 
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import services.rental.data.RentalTable
@@ -62,5 +63,19 @@ object RentalRepository {
                     )
                 }
                 .firstOrNull()
+        }
+
+    fun add(rental: Rental) =
+        transaction(db) {
+            RentalTable
+                .insert {
+                    it[rentalUid] = rental.mRentalUid
+                    it[username] = rental.mUsername
+                    it[paymentUid] = rental.mPaymentUid
+                    it[carUid] = rental.mCarUid
+                    it[dateFrom] = rental.mDateFrom
+                    it[dateTo] = rental.mDateTo
+                    it[status] = rental.mStatus
+                }.resultedValues!!.first()[RentalTable.id]
         }
 }
