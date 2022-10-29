@@ -55,10 +55,10 @@ object CarsRepository {
                 .select(carUid eq uid)
                 .map { car ->
                     Car(
-                    car[CarsTable.id],
-                    car[carUid],
-                    car[brand],
-                    car[model],
+                        car[CarsTable.id],
+                        car[carUid],
+                        car[brand],
+                        car[model],
                         car[registrationNumber],
                         car[price],
                         car[availability],
@@ -69,16 +69,10 @@ object CarsRepository {
                 .firstOrNull()
         }
 
-    /**
-     * LOL, DON'T LOOK AT THIS
-     */
-    fun patch(uid: UUID) =
+    fun changeAvailability(uid: UUID, newAvailability: Boolean) =
         transaction(db) {
-            CarsTable.update({ (CarsTable.carUid eq uid) and (CarsTable.availability eq false) }) {
-                it[availability] = true
-            }
-            CarsTable.update({ (CarsTable.carUid eq uid) and (CarsTable.availability eq true) }) {
-                it[availability] = false
+            CarsTable.update({ CarsTable.carUid eq uid }) {
+                it[availability] = newAvailability
             }
         }
 }

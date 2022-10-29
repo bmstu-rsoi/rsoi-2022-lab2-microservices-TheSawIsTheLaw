@@ -5,6 +5,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import services.rental.data.RentalTable
 import services.rental.data.RentalTable.carUid
 import services.rental.data.RentalTable.dateFrom
@@ -77,5 +78,13 @@ object RentalRepository {
                     it[dateTo] = rental.mDateTo
                     it[status] = rental.mStatus
                 }.resultedValues!!.first()[RentalTable.id]
+        }
+
+    fun setStatus(uid: UUID, newStatus: String) =
+        transaction(db) {
+            RentalTable
+                .update({ rentalUid eq uid }) {
+                    it[status] = newStatus
+                }
         }
 }

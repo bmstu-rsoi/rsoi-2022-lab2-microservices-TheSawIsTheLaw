@@ -15,9 +15,13 @@ class PaymentController {
     fun getPayment(@PathVariable paymentUid: UUID): ResponseEntity<Payment> =
         ResponseEntity.ok(PaymentRepository.get(paymentUid))
 
-    @PatchMapping("/{paymentUid}")
+    @GetMapping("/")
+    fun getPayments(): ResponseEntity<List<Payment>> =
+        ResponseEntity.ok(PaymentRepository.get())
+
+    @PatchMapping("/{paymentUid}/cancel")
     fun cancelPayment(@PathVariable paymentUid: UUID): ResponseEntity<*> =
-        ResponseEntity.ok(PaymentRepository.cancelPayment(paymentUid))
+        ResponseEntity.ok(PaymentRepository.setStatus(paymentUid, "CANCELED"))
 
     @PostMapping("/")
     fun addPayment(@RequestBody payment: Payment): ResponseEntity<Int> =

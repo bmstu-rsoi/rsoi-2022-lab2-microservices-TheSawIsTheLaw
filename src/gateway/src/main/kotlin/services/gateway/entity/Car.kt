@@ -8,8 +8,8 @@ class Car(
     val mBrand: String,
     val mModel: String,
     val mRegistrationNumber: String,
-    val price: Int,
-    val availability: Boolean,
-    val power: Int? = null,
-    val type: String? = null,
+    val mPrice: Int,
+    val mAvailability: Boolean,
+    val mPower: Int? = null,
+    val mType: String? = null,
 )

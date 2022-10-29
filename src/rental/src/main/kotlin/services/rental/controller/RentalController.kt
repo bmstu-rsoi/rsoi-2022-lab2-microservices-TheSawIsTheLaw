@@ -23,4 +23,12 @@ class RentalController {
     @PostMapping("/")
     fun addRental(@RequestBody rental: Rental): ResponseEntity<Int> =
         ResponseEntity.ok(RentalRepository.add(rental))
+
+    @PatchMapping("/{rentalUid}/finish")
+    fun finishRental(@PathVariable rentalUid: UUID): ResponseStatus =
+        ResponseStatus(HttpStatus.OK).apply { RentalRepository.setStatus(rentalUid, "FINISHED") }
+
+    @PatchMapping("/{rentalUid}/cancel")
+    fun cancelRental(@PathVariable rentalUid: UUID): ResponseStatus =
+        ResponseStatus(HttpStatus.OK).apply { RentalRepository.setStatus(rentalUid, "CANCELED") }
 }

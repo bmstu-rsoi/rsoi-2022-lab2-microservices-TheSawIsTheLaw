@@ -1,12 +1,10 @@
 package services.payment.repository
 
-import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 import services.payment.data.PaymentTable
+import services.payment.data.PaymentTable.paymentUid
 import services.payment.data.PaymentTable.price
 import services.payment.data.PaymentTable.status
 import services.payment.entity.Payment
@@ -23,6 +21,20 @@ object PaymentRepository {
             Config.POSTGRES_PASSWORD
         )
     }
+
+    fun get() =
+        transaction(db) {
+            PaymentTable
+                .selectAll()
+                .map { payment ->
+                    Payment(
+                        payment[PaymentTable.id],
+                        payment[paymentUid],
+                        payment[status],
+                        payment[price]
+                    )
+                }
+        }
 
     fun get(paymentUid: UUID) =
         transaction(db) {
@@ -48,10 +60,10 @@ object PaymentRepository {
             }.resultedValues!!.first()[PaymentTable.id]
         }
 
-    fun cancelPayment(paymentUid: UUID) =
+    fun setStatus(paymentUid: UUID, newStatus: String) =
         transaction(db) {
             PaymentTable.update({ PaymentTable.paymentUid eq paymentUid }) {
-                it[status] = "CANCELED"
+                it[status] = newStatus
             }
         }
 }

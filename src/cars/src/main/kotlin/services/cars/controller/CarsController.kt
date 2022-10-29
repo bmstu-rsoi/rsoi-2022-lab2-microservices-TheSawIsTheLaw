@@ -21,10 +21,11 @@ class CarsController(
     fun getCar(@PathVariable carUid: UUID): ResponseEntity<Car> =
         ResponseEntity.ok(CarsRepository.get(carUid))
 
-    /**
-     * DON'T GO DIPPER, I CRIED
-     */
-    @PatchMapping("/{carUid}")
-    fun switchAvailablity(@PathVariable carUid: UUID): ResponseStatus =
-        ResponseStatus(HttpStatus.OK).apply { CarsRepository.patch(carUid) }
+    @PatchMapping("/{carUid}/available")
+    fun availableCar(@PathVariable carUid: UUID): ResponseStatus =
+        ResponseStatus(HttpStatus.OK).apply { CarsRepository.changeAvailability(carUid, true) }
+
+    @PatchMapping("/{carUid}/unavailable")
+    fun unavailableCar(@PathVariable carUid: UUID): ResponseStatus =
+        ResponseStatus(HttpStatus.OK).apply { CarsRepository.changeAvailability(carUid, false) }
 }
