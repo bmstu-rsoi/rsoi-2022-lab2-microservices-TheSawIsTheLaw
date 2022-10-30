@@ -1,5 +1,6 @@
 package services.gateway.controller
 
+import com.google.gson.reflect.TypeToken
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.internal.EMPTY_REQUEST
 import okio.use
@@ -46,11 +47,14 @@ class GatewayController {
 
         return ClientKeeper.client.newCall(carRequest).execute().use { response ->
             if (!response.isSuccessful) null
-            else GsonKeeper.gson.fromJson(response.body.toString(), listOf<Car>().javaClass)
+            else {
+                val typeToken = object : TypeToken<List<Car>>() {}.type
+                GsonKeeper.gson.fromJson<List<Car>>(response.body!!.string().apply { println(this) }, typeToken)
+            }
         }
     }
 
-    private fun getPayments(): List<Payment>? {
+    private fun getPayments(): Array<Payment>? {
         val paymentRequest =
             OkHttpKeeper
                 .builder
@@ -60,7 +64,7 @@ class GatewayController {
 
         return ClientKeeper.client.newCall(paymentRequest).execute().use { response ->
             if (!response.isSuccessful) null
-            else GsonKeeper.gson.fromJson(response.body.toString(), listOf<Payment>().javaClass)
+            else GsonKeeper.gson.fromJson(response.body.toString(), Array<Payment>::class.java)
         }
     }
 
@@ -82,14 +86,14 @@ class GatewayController {
                     .let {
                         it.map { car ->
                             CarCarsResponse(
-                                car.mCarUid,
-                                car.mBrand,
-                                car.mModel,
-                                car.mRegistrationNumber,
-                                car.mPower,
-                                car.mType,
-                                car.mPrice,
-                                car.mAvailability
+                                car.carUid,
+                                car.brand,
+                                car.model,
+                                car.registrationNumber,
+                                car.power,
+                                car.type,
+                                car.price,
+                                car.availability
                             )
                         }
                     }
@@ -108,8 +112,8 @@ class GatewayController {
                 .build()
 
         val rentals = ClientKeeper.client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) emptyList()
-            else GsonKeeper.gson.fromJson(response.body.toString(), listOf<Rental>().javaClass)
+            if (!response.isSuccessful) emptyArray()
+            else GsonKeeper.gson.fromJson(response.body.toString(), Array<Rental>::class.java)
         }
 
         val cars = getCars(true) ?: return ResponseEntity.internalServerError().build()
@@ -124,8 +128,8 @@ class GatewayController {
                     rental.mDateFrom,
                     rental.mDateTo,
                     cars
-                        .findLast { car -> car.mCarUid == rental.mCarUid }!!
-                        .let { CarRentalResponse(it.mCarUid, it.mBrand, it.mModel, it.mRegistrationNumber) },
+                        .findLast { car -> car.carUid == rental.mCarUid }!!
+                        .let { CarRentalResponse(it.carUid, it.brand, it.model, it.registrationNumber) },
                     payments
                         .findLast { payment -> payment.mPaymentUid == rental.mPaymentUid }!!
                         .let { PaymentRentalResponse(it.mPaymentUid, it.mStatus, it.mPrice) }
@@ -151,13 +155,13 @@ class GatewayController {
             else GsonKeeper.gson.fromJson(response.body.toString(), Car::class.java)
         } ?: return ResponseEntity.badRequest().build()
 
-        if (!car.mAvailability)
+        if (!car.availability)
             return ResponseEntity.badRequest().build()
 
         val reserveCarRequest =
             OkHttpKeeper
                 .builder
-                .url(OkHttpKeeper.CARS_URL + "/${car.mCarUid}/unavailable")
+                .url(OkHttpKeeper.CARS_URL + "/${car.carUid}/unavailable")
                 .patch(EMPTY_REQUEST)
                 .build()
 
@@ -165,7 +169,7 @@ class GatewayController {
         ClientKeeper.client.newCall(reserveCarRequest).execute()
 
         val rentalPeriodDays = ChronoUnit.DAYS.between(reservation.dateFrom, reservation.dateTo)
-        val money = car.mPrice * rentalPeriodDays
+        val money = car.price * rentalPeriodDays
         val paymentUid = UUID.randomUUID()
 
         val rentalToPost = Rental(
@@ -173,7 +177,7 @@ class GatewayController {
             UUID.randomUUID(),
             username,
             paymentUid,
-            car.mCarUid,
+            car.carUid,
             reservation.dateFrom,
             reservation.dateTo,
             "IN_PROGRESS"
@@ -208,7 +212,7 @@ class GatewayController {
             ReservationResponse(
                 rentalToPost.mRentalUid,
                 rentalToPost.mStatus,
-                car.mCarUid,
+                car.carUid,
                 rentalToPost.mDateFrom,
                 rentalToPost.mDateTo,
                 paymentToPost
@@ -235,8 +239,8 @@ class GatewayController {
                 rental.mDateFrom,
                 rental.mDateTo,
                 cars!!
-                    .findLast { car -> car.mCarUid == rental.mCarUid }!!
-                    .let { CarRentalResponse(it.mCarUid, it.mBrand, it.mModel, it.mRegistrationNumber) },
+                    .findLast { car -> car.carUid == rental.mCarUid }!!
+                    .let { CarRentalResponse(it.carUid, it.brand, it.model, it.registrationNumber) },
                 payments!!
                     .findLast { payment -> payment.mPaymentUid == rental.mPaymentUid }!!
                     .let { PaymentRentalResponse(it.mPaymentUid, it.mStatus, it.mPrice) }

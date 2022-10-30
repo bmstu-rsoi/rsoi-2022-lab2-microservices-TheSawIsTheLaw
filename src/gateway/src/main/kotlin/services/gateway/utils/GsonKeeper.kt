@@ -4,5 +4,7 @@ import com.google.gson.Gson
 
 object GsonKeeper {
 
-    val gson by lazy { Gson() }
+    val gson by lazy {
+        Gson()
+    }
 }
