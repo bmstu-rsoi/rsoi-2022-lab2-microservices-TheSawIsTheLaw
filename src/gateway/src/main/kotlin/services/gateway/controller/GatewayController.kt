@@ -40,7 +40,7 @@ class GatewayController {
         val carRequest =
             OkHttpKeeper
                 .builder
-                .url(OkHttpKeeper.CARS_URL + "&showAll=$showAll")
+                .url(OkHttpKeeper.CARS_URL + "/?showAll=$showAll")
                 .get()
                 .build()
 
