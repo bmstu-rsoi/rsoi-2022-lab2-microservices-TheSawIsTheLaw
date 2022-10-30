@@ -6,8 +6,8 @@ import java.util.*
 class RentalResponse(
     val rentalUid: UUID,
     val status: String,
-    val dateFrom: Instant,
-    val dateTo: Instant,
+    val dateFrom: String,
+    val dateTo: String,
     val car: CarRentalResponse,
     val payment: PaymentRentalResponse
 )

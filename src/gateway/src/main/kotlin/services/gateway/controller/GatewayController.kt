@@ -158,13 +158,15 @@ class GatewayController {
 
         val payments = getPayments() ?: return ResponseEntity.internalServerError().build()
 
+        val outputDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.systemDefault())
+
         return ResponseEntity.ok(
             rentals.map { rental ->
                 RentalResponse(
                     rental.rentalUid,
                     rental.status,
-                    rental.dateFrom,
-                    rental.dateTo,
+                    outputDateFormatter.format(rental.dateFrom),
+                    outputDateFormatter.format(rental.dateTo),
                     cars
                         .findLast { car -> car.carUid == rental.carUid }!!
                         .let { CarRentalResponse(it.carUid, it.brand, it.model, it.registrationNumber) },
@@ -271,12 +273,14 @@ class GatewayController {
         val cars = getCars(true)
         val payments = getPayments()
 
+        val outputDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.systemDefault())
+
         return ResponseEntity.ok(
             RentalResponse(
                 rental.rentalUid,
                 rental.status,
-                rental.dateFrom,
-                rental.dateTo,
+                outputDateFormatter.format(rental.dateFrom),
+                outputDateFormatter.format(rental.dateTo),
                 cars!!
                     .findLast { car -> car.carUid == rental.carUid }!!
                     .let { CarRentalResponse(it.carUid, it.brand, it.model, it.registrationNumber) },
