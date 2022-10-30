@@ -105,7 +105,7 @@ class GatewayController {
     }
 
     @GetMapping("/rental")
-    fun getRentals(@RequestHeader("User-Name") username: String) : ResponseEntity<List<RentalResponse>> {
+    fun getRentals(@RequestHeader("X-User-Name") username: String) : ResponseEntity<List<RentalResponse>> {
         val request =
             OkHttpKeeper
                 .builder
@@ -129,16 +129,16 @@ class GatewayController {
         return ResponseEntity.ok(
             rentals.map { rental ->
                 RentalResponse(
-                    rental.mRentalUid,
-                    rental.mStatus,
-                    rental.mDateFrom,
-                    rental.mDateTo,
+                    rental.rentalUid,
+                    rental.status,
+                    rental.dateFrom,
+                    rental.dateTo,
                     cars
-                        .findLast { car -> car.carUid == rental.mCarUid }!!
+                        .findLast { car -> car.carUid == rental.carUid }!!
                         .let { CarRentalResponse(it.carUid, it.brand, it.model, it.registrationNumber) },
                     payments
-                        .findLast { payment -> payment.mPaymentUid == rental.mPaymentUid }!!
-                        .let { PaymentRentalResponse(it.mPaymentUid, it.mStatus, it.mPrice) }
+                        .findLast { payment -> payment.paymentUid == rental.paymentUid }!!
+                        .let { PaymentRentalResponse(it.paymentUid, it.status, it.price) }
                 )
             }
         )
@@ -146,7 +146,7 @@ class GatewayController {
 
     @PostMapping("/rental")
     fun reserveRental(
-        @RequestHeader("User-Name") username: String,
+        @RequestHeader("X-User-Name") username: String,
         @RequestBody reservation: RentalReservation
     ) : ResponseEntity<ReservationResponse> {
         val carRequest =
@@ -216,11 +216,11 @@ class GatewayController {
 
         return ResponseEntity.ok(
             ReservationResponse(
-                rentalToPost.mRentalUid,
-                rentalToPost.mStatus,
+                rentalToPost.rentalUid,
+                rentalToPost.status,
                 car.carUid,
-                rentalToPost.mDateFrom,
-                rentalToPost.mDateTo,
+                rentalToPost.dateFrom,
+                rentalToPost.dateTo,
                 paymentToPost
             )
         )
@@ -229,27 +229,27 @@ class GatewayController {
     @GetMapping("/rental/{rentalUid}")
     fun getUsersRental(
         @PathVariable("rentalUid") rentalUid: UUID,
-        @RequestHeader("User-Name") username: String
+        @RequestHeader("X-User-Name") username: String
     ): ResponseEntity<RentalResponse> {
         val rental = getRental(rentalUid) ?: return ResponseEntity.notFound().build()
 
-        if (username != rental.mUsername) return ResponseEntity.notFound().build()
+        if (username != rental.username) return ResponseEntity.notFound().build()
 
         val cars = getCars(true)
         val payments = getPayments()
 
         return ResponseEntity.ok(
             RentalResponse(
-                rental.mRentalUid,
-                rental.mStatus,
-                rental.mDateFrom,
-                rental.mDateTo,
+                rental.rentalUid,
+                rental.status,
+                rental.dateFrom,
+                rental.dateTo,
                 cars!!
-                    .findLast { car -> car.carUid == rental.mCarUid }!!
+                    .findLast { car -> car.carUid == rental.carUid }!!
                     .let { CarRentalResponse(it.carUid, it.brand, it.model, it.registrationNumber) },
                 payments!!
-                    .findLast { payment -> payment.mPaymentUid == rental.mPaymentUid }!!
-                    .let { PaymentRentalResponse(it.mPaymentUid, it.mStatus, it.mPrice) }
+                    .findLast { payment -> payment.paymentUid == rental.paymentUid }!!
+                    .let { PaymentRentalResponse(it.paymentUid, it.status, it.price) }
             )
         )
     }
@@ -261,12 +261,12 @@ class GatewayController {
     ): ResponseEntity<*> {
         val rental = getRental(rentalUid) ?: return ResponseEntity("lol what", HttpStatus.NOT_FOUND)
 
-        if (username != rental.mUsername) return ResponseEntity("lol what", HttpStatus.NOT_FOUND)
+        if (username != rental.username) return ResponseEntity("lol what", HttpStatus.NOT_FOUND)
 
         val carAvailableStateRequest =
             OkHttpKeeper
                 .builder
-                .url(OkHttpKeeper.CARS_URL + "/${rental.mCarUid}/available")
+                .url(OkHttpKeeper.CARS_URL + "/${rental.carUid}/available")
                 .patch(EMPTY_REQUEST)
                 .build()
 
@@ -275,7 +275,7 @@ class GatewayController {
         val rentalFinishRequest =
             OkHttpKeeper
                 .builder
-                .url(OkHttpKeeper.RENTAL_URL + "/${rental.mRentalUid}/finish")
+                .url(OkHttpKeeper.RENTAL_URL + "/${rental.rentalUid}/finish")
                 .patch(EMPTY_REQUEST)
                 .build()
 
@@ -291,12 +291,12 @@ class GatewayController {
     ): ResponseEntity<*> {
         val rental = getRental(rentalUid) ?: return ResponseEntity("lol man", HttpStatus.NOT_FOUND)
 
-        if (rental.mUsername != username) return ResponseEntity("lol man", HttpStatus.NOT_FOUND)
+        if (rental.username != username) return ResponseEntity("lol man", HttpStatus.NOT_FOUND)
 
         val carAvailableStateRequest =
             OkHttpKeeper
                 .builder
-                .url(OkHttpKeeper.CARS_URL + "/${rental.mCarUid}/available")
+                .url(OkHttpKeeper.CARS_URL + "/${rental.carUid}/available")
                 .patch(EMPTY_REQUEST)
                 .build()
 
@@ -314,7 +314,7 @@ class GatewayController {
         val cancelPaymentRequest =
             OkHttpKeeper
                 .builder
-                .url(OkHttpKeeper.PAYMENT_URL + "/${rental.mPaymentUid}/cancel")
+                .url(OkHttpKeeper.PAYMENT_URL + "/${rental.paymentUid}/cancel")
                 .patch(EMPTY_REQUEST)
                 .build()
 

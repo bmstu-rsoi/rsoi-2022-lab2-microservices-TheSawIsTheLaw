@@ -54,9 +54,9 @@ object PaymentRepository {
     fun add(payment: Payment) =
         transaction(db) {
             PaymentTable.insert {
-                it[paymentUid] = payment.mPaymentUid
-                it[status] = payment.mStatus
-                it[price] = payment.mPrice
+                it[paymentUid] = payment.paymentUid
+                it[status] = payment.status
+                it[price] = payment.price
             }.resultedValues!!.first()[PaymentTable.id]
         }
 

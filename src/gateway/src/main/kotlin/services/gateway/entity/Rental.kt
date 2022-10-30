@@ -4,12 +4,12 @@ import java.time.Instant
 import java.util.UUID
 
 class Rental(
-    val mId: Int,
-    val mRentalUid: UUID,
-    val mUsername: String,
-    val mPaymentUid: UUID,
-    val mCarUid: UUID,
-    val mDateFrom: Instant,
-    val mDateTo: Instant,
-    val mStatus: String
+    val id: Int,
+    val rentalUid: UUID,
+    val username: String,
+    val paymentUid: UUID,
+    val carUid: UUID,
+    val dateFrom: Instant,
+    val dateTo: Instant,
+    val status: String
 )
