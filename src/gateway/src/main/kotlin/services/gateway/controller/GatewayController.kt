@@ -24,6 +24,8 @@ import services.gateway.utils.OkHttpKeeper
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.*
 
@@ -225,7 +227,6 @@ class GatewayController {
                 .url(OkHttpKeeper.RENTAL_URL + "/")
                 .post(GsonKeeper.gson.toJson(rentalToPost).toRequestBody("application/json; charset=utf-8".toMediaType()))
                 .build()
-        println("СУКА УЕБИСЬ!!! ${GsonKeeper.gson.toJson(rentalToPost)}")
         ClientKeeper.client.newCall(rentalRequest).execute()
 
         val paymentToPost = Payment(
@@ -244,13 +245,15 @@ class GatewayController {
 
         ClientKeeper.client.newCall(paymentRequest).execute()
 
+        val outputDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.systemDefault())
+
         return ResponseEntity.ok(
             ReservationResponse(
                 rentalToPost.rentalUid,
                 rentalToPost.status,
                 car.carUid,
-                rentalToPost.dateFrom,
-                rentalToPost.dateTo,
+                outputDateFormatter.format(rentalToPost.dateFrom),
+                outputDateFormatter.format(rentalToPost.dateTo),
                 paymentToPost
             )
         )

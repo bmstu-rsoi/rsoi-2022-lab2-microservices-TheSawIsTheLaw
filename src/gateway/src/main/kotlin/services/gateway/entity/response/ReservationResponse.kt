@@ -8,7 +8,7 @@ class ReservationResponse(
     val rentalUid: UUID,
     val status: String,
     val carUid: UUID,
-    val dateFrom: Instant,
-    val dateTo: Instant,
+    val dateFrom: String,
+    val dateTo: String,
     val payment: Payment
 )
