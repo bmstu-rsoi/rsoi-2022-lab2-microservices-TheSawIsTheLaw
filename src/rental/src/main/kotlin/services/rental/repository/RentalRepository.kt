@@ -14,6 +14,8 @@ import services.rental.data.RentalTable.paymentUid
 import services.rental.data.RentalTable.rentalUid
 import services.rental.data.RentalTable.status
 import services.rental.entity.Rental
+import services.rental.entity.StupidInstant
+import services.rental.entity.StupidRental
 import services.rental.insecure.Config
 import java.util.UUID
 
@@ -28,38 +30,38 @@ object RentalRepository {
         )
     }
 
-    fun get(username: String): Array<Rental> =
+    fun get(username: String): Array<StupidRental> =
         transaction(db) {
             RentalTable
                 .select(RentalTable.username eq username)
                 .map { rental ->
-                    Rental(
+                    StupidRental(
                         rental[RentalTable.id],
                         rental[rentalUid],
                         rental[RentalTable.username],
                         rental[paymentUid],
                         rental[carUid],
-                        rental[dateFrom],
-                        rental[dateTo],
+                        StupidInstant(rental[dateFrom].epochSecond, 0),
+                        StupidInstant(rental[dateTo].epochSecond, 0),
                         rental[status]
                     )
                 }
                 .toTypedArray()
         }
 
-    fun get(rentalUid: UUID): Rental? =
+    fun get(rentalUid: UUID): StupidRental? =
         transaction(db) {
             RentalTable
                 .select(RentalTable.rentalUid eq rentalUid)
                 .map { rental ->
-                    Rental(
+                    StupidRental(
                         rental[RentalTable.id],
                         rental[RentalTable.rentalUid],
                         rental[RentalTable.username],
                         rental[paymentUid],
                         rental[carUid],
-                        rental[dateFrom],
-                        rental[dateTo],
+                        StupidInstant(rental[dateFrom].epochSecond, 0),
+                        StupidInstant(rental[dateTo].epochSecond, 0),
                         rental[status]
                     )
                 }
@@ -70,13 +72,13 @@ object RentalRepository {
         transaction(db) {
             RentalTable
                 .insert {
-                    it[rentalUid] = rental.mRentalUid
-                    it[username] = rental.mUsername
-                    it[paymentUid] = rental.mPaymentUid
-                    it[carUid] = rental.mCarUid
-                    it[dateFrom] = rental.mDateFrom
-                    it[dateTo] = rental.mDateTo
-                    it[status] = rental.mStatus
+                    it[rentalUid] = rental.rentalUid
+                    it[username] = rental.username
+                    it[paymentUid] = rental.paymentUid
+                    it[carUid] = rental.carUid
+                    it[dateFrom] = rental.dateFrom
+                    it[dateTo] = rental.dateTo
+                    it[status] = rental.status
                 }.resultedValues!!.first()[RentalTable.id]
         }
 

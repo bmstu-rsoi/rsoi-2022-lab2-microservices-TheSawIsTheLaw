@@ -1,27 +1,54 @@
 package services.gateway.controller
 
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.google.gson.reflect.TypeToken
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.internal.EMPTY_REQUEST
 import okio.use
+import org.springframework.context.annotation.Bean
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
-import services.gateway.entity.Car
-import services.gateway.entity.Payment
-import services.gateway.entity.Rental
-import services.gateway.entity.RentalReservation
+import services.gateway.entity.*
 import services.gateway.entity.response.*
 import services.gateway.utils.ClientKeeper
 import services.gateway.utils.GsonKeeper
 import services.gateway.utils.OkHttpKeeper
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.*
 
 @Controller
 @RequestMapping("api/v1")
 class GatewayController {
+
+    @Bean
+    fun javaTimeModule(): JavaTimeModule? {
+        val javaTimeModule = JavaTimeModule()
+        val formatter = SimpleDateFormat("yyyy-MM-dd")
+        javaTimeModule.addDeserializer(Instant::class.java, object : StdDeserializer<Instant?>(Instant::class.java) {
+            @Throws(IOException::class, JsonProcessingException::class)
+            override fun deserialize(jsonParser: JsonParser, deserializationContext: DeserializationContext?): Instant? {
+                return try {
+                    var stringDate = jsonParser.readValueAs(String::class.java)
+                    if (stringDate.length > 10) stringDate = stringDate.slice(0 until 10)
+                    formatter.parse(stringDate).toInstant()
+                } catch (ex: Exception) {
+                    jsonParser.readValueAs(StupidInstant::class.java).let { Instant.ofEpochSecond(it.seconds) }
+                }
+            }
+        })
+        return javaTimeModule
+    }
 
     private fun getRental(uid: UUID): Rental? {
         val rentalRequest =
@@ -33,7 +60,10 @@ class GatewayController {
 
         return ClientKeeper.client.newCall(rentalRequest).execute().use { response ->
             if (!response.isSuccessful) null
-            else GsonKeeper.gson.fromJson(response.body.toString(), Rental::class.java)
+            else {
+                val body = response.body!!.string()
+                GsonKeeper.gson.fromJson(body, Rental::class.java)
+            }
         }
     }
 
@@ -158,7 +188,7 @@ class GatewayController {
 
         val car = ClientKeeper.client.newCall(carRequest).execute().use { response ->
             if (!response.isSuccessful) null
-            else GsonKeeper.gson.fromJson(response.body.toString(), Car::class.java)
+            else GsonKeeper.gson.fromJson(response.body!!.string(), Car::class.java)
         } ?: return ResponseEntity.badRequest().build()
 
         if (!car.availability)
@@ -193,9 +223,9 @@ class GatewayController {
             OkHttpKeeper
                 .builder
                 .url(OkHttpKeeper.RENTAL_URL + "/")
-                .post(GsonKeeper.gson.toJson(rentalToPost).toRequestBody())
+                .post(GsonKeeper.gson.toJson(rentalToPost).toRequestBody("application/json; charset=utf-8".toMediaType()))
                 .build()
-
+        println("СУКА УЕБИСЬ!!! ${GsonKeeper.gson.toJson(rentalToPost)}")
         ClientKeeper.client.newCall(rentalRequest).execute()
 
         val paymentToPost = Payment(
@@ -209,7 +239,7 @@ class GatewayController {
             OkHttpKeeper
                 .builder
                 .url(OkHttpKeeper.PAYMENT_URL + "/")
-                .post(GsonKeeper.gson.toJson(paymentToPost).toRequestBody())
+                .post(GsonKeeper.gson.toJson(paymentToPost).toRequestBody("application/json; charset=utf-8".toMediaType()))
                 .build()
 
         ClientKeeper.client.newCall(paymentRequest).execute()
@@ -256,7 +286,7 @@ class GatewayController {
 
     @PostMapping("/rental/{rentalUid}/finish")
     fun finishRental(
-        @RequestHeader("User-Name") username: String,
+        @RequestHeader("X-User-Name") username: String,
         @PathVariable rentalUid: UUID
     ): ResponseEntity<*> {
         val rental = getRental(rentalUid) ?: return ResponseEntity("lol what", HttpStatus.NOT_FOUND)
@@ -286,7 +316,7 @@ class GatewayController {
 
     @DeleteMapping("/rental/{rentalUid}")
     fun cancelRent(
-        @RequestHeader("User-Name") username: String,
+        @RequestHeader("X-User-Name") username: String,
         @PathVariable rentalUid: UUID
     ): ResponseEntity<*> {
         val rental = getRental(rentalUid) ?: return ResponseEntity("lol man", HttpStatus.NOT_FOUND)
@@ -297,6 +327,7 @@ class GatewayController {
             OkHttpKeeper
                 .builder
                 .url(OkHttpKeeper.CARS_URL + "/${rental.carUid}/available")
+                .addHeader("User-Name", username)
                 .patch(EMPTY_REQUEST)
                 .build()
 
@@ -306,7 +337,7 @@ class GatewayController {
             OkHttpKeeper
                 .builder
                 .url(OkHttpKeeper.RENTAL_URL + "/$rentalUid/cancel")
-                .delete()
+                .patch(EMPTY_REQUEST)
                 .build()
 
         ClientKeeper.client.newCall(cancelRentalRequest).execute()
