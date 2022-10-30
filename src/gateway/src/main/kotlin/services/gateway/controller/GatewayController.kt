@@ -49,12 +49,12 @@ class GatewayController {
             if (!response.isSuccessful) null
             else {
                 val typeToken = object : TypeToken<List<Car>>() {}.type
-                GsonKeeper.gson.fromJson<List<Car>>(response.body!!.string().apply { println(this) }, typeToken)
+                GsonKeeper.gson.fromJson<List<Car>>(response.body!!.string(), typeToken)
             }
         }
     }
 
-    private fun getPayments(): Array<Payment>? {
+    private fun getPayments(): List<Payment>? {
         val paymentRequest =
             OkHttpKeeper
                 .builder
@@ -64,7 +64,10 @@ class GatewayController {
 
         return ClientKeeper.client.newCall(paymentRequest).execute().use { response ->
             if (!response.isSuccessful) null
-            else GsonKeeper.gson.fromJson(response.body.toString(), Array<Payment>::class.java)
+            else {
+                val typeToken = object : TypeToken<List<Payment>>() {}.type
+                GsonKeeper.gson.fromJson<List<Payment>>(response.body!!.string(), typeToken)
+            }
         }
     }
 
@@ -82,7 +85,7 @@ class GatewayController {
                 size,
                 cars.size,
                 cars
-                    .slice(size * (page - 1) until (size * page))
+                    .slice(size * (page - 1) until if (size * page < cars.size) (size * page) else cars.size)
                     .let {
                         it.map { car ->
                             CarCarsResponse(
@@ -112,8 +115,11 @@ class GatewayController {
                 .build()
 
         val rentals = ClientKeeper.client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) emptyArray()
-            else GsonKeeper.gson.fromJson(response.body.toString(), Array<Rental>::class.java)
+            if (!response.isSuccessful) emptyList()
+            else {
+                val typeToken = object : TypeToken<List<Rental>>() {}.type
+                GsonKeeper.gson.fromJson<List<Rental>>(response.body!!.string(), typeToken)
+            }
         }
 
         val cars = getCars(true) ?: return ResponseEntity.internalServerError().build()
